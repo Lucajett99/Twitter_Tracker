@@ -1,5 +1,0 @@
-20/10/2020
-La riunione di oggi ha lo scopo di organizzare e discutere il progetto quasi nella sua interezza. Si è parlato di quello che sarà il prodotto finale e di quelli che sono i risultati che si vuole ottenere. Il risultato per questa prima parte della discussione porta la volontà di creare una Web app che fornirà i servizi descritti nelle user story, discusse nella seconda parte della riunione.
-24/10/2020
-La riunione di oggi vuole completare una partita a scrumble e revisionare la creazione delle user story svolta nelle giornate precedenti.
-ciao
