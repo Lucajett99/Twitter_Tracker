@@ -45,7 +45,7 @@ export default  class Header extends React.Component{
                     <table style={tab} >
                         <tbody>
                         <tr>
-                            <td><div ><Avatar alt="Logo" src="../src/img/twitterTracker.jpeg" style={avtr} /></div></td>
+                            <td><div ><Avatar alt="Logo" src="../../public/img/twitterTracker.jpeg" style={avtr} /></div></td>
                             <td style={col2}><div ><h1 style={title}>Twitter Tracker
                                         </h1>
                             </div> </td>
