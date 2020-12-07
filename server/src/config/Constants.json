@@ -1,0 +1,18 @@
+{
+    "port": 3000,
+    "origin": "http://localhost:8080",
+    "saltRounds": 10,
+    "twitterApiUrl": "https://api.twitter.com/",
+    "requiredEnvVars": [
+        "JWT_SECRET",
+        "BEARER_TOKEN"
+    ],
+    "whitelist": [
+        "login",
+        "tweets",
+        "trends"
+    ],
+    "folders": [
+        "users"
+    ]
+}
