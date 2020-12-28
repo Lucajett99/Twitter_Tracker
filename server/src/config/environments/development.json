@@ -1,6 +1,0 @@
-{
-    "PORT": 3000,
-    "ORIGIN": "http://localhost:8080",
-    "JWT_SECRET": "i73tyf8947yrw873y48dr7yh9w3874yf98uw7ehifgh",
-    "BEARER_TOKEN": "AAAAAAAAAAAAAAAAAAAAAMrVIwEAAAAAIzz71ZCU5cAtvPDMmFpOK0gWhDE%3DK1yPC7sVQGGs6xgYh0xnaWGKaFbljoaYmEqj6iaxVQyVRaxsQs"
-}
