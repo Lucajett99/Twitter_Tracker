@@ -1,0 +1,16 @@
+{
+    "extends": "../tsconfig.json",
+    "compilerOptions": {
+        "module": "commonjs",
+        "declaration": true,
+        "composite": true,
+        "sourceMap": true,
+        "target": "es6",
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "tsBuildInfoFile": "./dist/.tsbuildinfo"
+    },
+    "include": [
+        "src/**/*"
+    ]
+}

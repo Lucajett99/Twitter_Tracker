@@ -1,0 +1,25 @@
+{
+    "defaultSeverity": "error",
+    "extends": [
+        "tslint:recommended",
+        "tslint-no-unused-expression-chai"
+    ],
+    "jsRules": {},
+    "rules": {
+        "no-console": false,
+        "radix": false,
+        "no-empty": false
+    },
+    "rulesDirectory": [],
+    "overrides": [
+        {
+            "files": [
+                "*.test.js",
+                "*.spec.js"
+            ],
+            "rules": {
+                "no-unused-expressions": "off"
+            }
+        }
+    ]
+}

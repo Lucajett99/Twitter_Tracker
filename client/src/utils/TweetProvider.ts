@@ -1,40 +1,16 @@
-import moment from 'moment';
-import { Moment } from 'moment';
-
-import { TimeRange, SearchParams, GeoCode } from './Interfaces';
+import { EventEmitter } from 'events';
+import { ISearchParams, IGeocode, ITweetCollection, ITweet } from '@twitter-tracker/shared';
 import Api from './Api';
-
-/**
- * Abstract class with methods to provide tweets from Twitter API
- */
+import TweetCollection from './TweetCollection';
+import Config from './Config';
 export default abstract class TweetProvider {
-    /*
-    private static extractTime(timeRange: TimeRange) {
-        if (!timeRange)
-            return {};
-        const now: Moment = moment();
-        const oneWeekAgo: Moment = moment().subtract(7, 'd');
-        const since: Moment = moment(timeRange.since);
-        const until: Moment = moment(timeRange.until);
-        if (since.isAfter(now) || until.isAfter(now))
-            throw new Error('Start and end date cannot be in the future');
-        if (since.isBefore(oneWeekAgo) || until.isBefore(oneWeekAgo))
-            throw new Error('Start and end date cannot be past one week');
-        if (since.isAfter(until))
-            throw new Error('Start date must be before end date');
-        return {
-            since: since.isValid() ? since.format('YYYY-MM-DD') : undefined,
-            until: until.isValid() ? until.format('YYYY-MM-DD') : undefined
-        };
-    }
-    */
-
-
-    private static extractGeocode(geocode: GeoCode): string {
+    public static extractGeocode(geocode: IGeocode): string {
         if (!geocode)
             return undefined;
+        if(!(geocode.radius))
+            geocode.radius = "10";  // set default radius
         const { latitude, longitude, radius } = geocode;
-        return `${latitude},${longitude},${radius}`;
+        return `${latitude},${longitude},${radius}km`;
     }
 
     /**
@@ -43,13 +19,13 @@ export default abstract class TweetProvider {
      * {
      *     query: string
      *     author: string
-     *     since: Date    
+     *     since: Date
      *     until: Date
      * }
      * @param params Search object
      * @returns Array of filtered Tweets
      */
-    public static async getBySearchParams(params: SearchParams): Promise<any[]> {
+    public static async getBySearchParams(params: ISearchParams): Promise<any[]> {
         if (!params.keywords && !params.author)
             throw new Error('Keywords and author params cannot both be null');
         const tweets = await Api.get('/tweets', params);
@@ -62,9 +38,46 @@ export default abstract class TweetProvider {
      * @param location The name of the location (could be city, country, ...) (default: 'world')
      * @returns Array of trends
      */
-    public static async getTrends(/*location: string = 'world'*/): Promise<any[]> {
-        const result = await Api.get('/trends', { location: 'world' });
+    public static async getTrends(woeid: number = 1): Promise<any[]> {
+        const result = await Api.get('/trends', {woeid});
         return result[0].trends;
+    }
+
+    /**
+     * Provide latitude and longitude of a place
+     * @param place The name of the place you want to search
+     * @returns Coordinates
+     */
+    public static async getGeolocation(place: string): Promise<any> {
+        const result = place? await Api.getGeo(place) : undefined;
+        return result;
+    }
+
+    public static async getTweetCollections(): Promise<ITweetCollection[]>{
+        const list = await Api.get('/tweet-collections', {}, { auth: true });
+        return list;
+    }
+
+    public static async getTweetCollection(name: string): Promise<{ tweetCollection: TweetCollection, progress: EventEmitter }> {
+        const collection: ITweetCollection = await Api.get(`/tweet-collections/${name}`, {}, { auth: true });
+        const tweetCollection = new TweetCollection(collection);
+        const size: number = collection.size;
+        const progress: EventEmitter = new EventEmitter();
+        (async () => {
+            let nextTweet = 0;
+            if (size === 0)
+                return progress.emit('progress', 100);
+            while (nextTweet < size) {
+                const from = nextTweet;
+                const to = Math.min(from + Config.chunkSize, size);
+                const tweets: ITweet[] = await Api.get(`/tweet-collections/${name}/tweets`, { from, to }, { auth: true });
+                nextTweet = to;
+                tweetCollection.add(tweets);
+                const percentage = 100 * to / size;
+                progress.emit('progress', Math.round(percentage));
+            }
+        })();
+        return { tweetCollection, progress };
     }
 
 }

@@ -1,6 +1,11 @@
+import { EventEmitter } from 'events';
 import FileSaver from 'file-saver';
-//@ts-ignore
+// @ts-ignore
 import * as wf from 'word-freq';
+import * as _ from 'lodash';
+import { ISearchParams, IShare, ITweetCollection } from '@twitter-tracker/shared';
+import Api from './Api';
+import Config from './Config';
 
 /**
  * Class which encapsulates a collection of tweets, where tweets can be added, loaded and removed.
@@ -9,16 +14,20 @@ import * as wf from 'word-freq';
 export default class TweetCollection {
     private name: string;
     private tweets: any;
+    private _stream: any;
+    private _share: any;
 
     /**
      * Instantiates a tweet collection with an empty set of tweets
      * @param name The name of the collection (default: 'myCollection')
      */
-    constructor(name: string = 'myCollection') {
-        if (!name)
+    constructor(data: ITweetCollection) {
+        if (!data.name)
             throw new Error('Name cannot be empty');
-        this.name = name;
+        this.name = data.name;
         this.tweets = {};
+        this.stream = data.stream;
+        this.share = data.share
     }
 
     /**
@@ -33,7 +42,7 @@ export default class TweetCollection {
             fileReader.onload = (event) => {
                 const json: string = event.target.result as string;
                 const tweets = JSON.parse(json);
-                const collection = new TweetCollection(name);
+                const collection = new TweetCollection({ name });
                 collection.add(tweets);
                 resolve(collection);
             };
@@ -51,6 +60,9 @@ export default class TweetCollection {
         this.name = name;
     }
 
+    public getName(): string{
+        return this.name;
+    }
     /**
      * Adds tweets to the collection
      * @param tweets Array of tweets
@@ -58,8 +70,9 @@ export default class TweetCollection {
     public add(tweets: any | any[]): void {
         if (!Array.isArray(tweets))
             tweets = [ tweets ];
-        for (let tweet of tweets)
-            this.tweets[tweet.id] = tweet;
+        tweets = tweets.reverse();
+        for (const tweet of tweets)
+            this.tweets[""+tweet.id] = tweet;
     }
 
     /**
@@ -67,9 +80,13 @@ export default class TweetCollection {
      * @param ids The id(s) of the tweets to be removed
      */
     public remove(...ids: string[]): void {
-        for (let id of ids)
+        for (const id of ids)
             if (this.tweets[id])
                 delete this.tweets[id];
+    }
+
+    public clear() {
+        this.tweets = {};
     }
 
     /**
@@ -88,7 +105,7 @@ export default class TweetCollection {
         const data = this.getTweets();
         return JSON.stringify(data);
     }
-    
+
     /**
      * Returns information about the top most frequent words in the collection
      * @param limit The quantity of needed most-frequent words (default: 20)
@@ -101,7 +118,7 @@ export default class TweetCollection {
         const tweets = this.getTweets().map(tweet => tweet.text).join(' ');
         const occurrences = wf.freq(tweets);
         let tmp = [];
-        for (let word in occurrences)
+        for (const word in occurrences)
             tmp.push({ word, occurrences: occurrences[word] });
         tmp = tmp.filter(o => o.word.length >= minWordLength);
         tmp.sort((o1, o2) => o2.occurrences - o1.occurrences);
@@ -113,7 +130,7 @@ export default class TweetCollection {
      * Opens file system dialog for saving JSON file containing tweets.
      * The file name is the name of the collection (with extension '.json')
      */
-    public save(): void {
+    public download(): void {
         const json = this.getJson();
         const blob: Blob = new Blob([json], { type: 'application/json' });
         FileSaver.saveAs(blob, `${this.name}.json`);
@@ -133,7 +150,8 @@ export default class TweetCollection {
      * @returns The size of the collection
      */
     public size(): number {
-        return this.getTweets().length;
+        let array = this.getTweets();
+        return array.length;
     }
 
     /**
@@ -143,5 +161,61 @@ export default class TweetCollection {
     public empty(): boolean {
         return this.getTweets().length === 0;
     }
-    
+
+    public get stream(): ISearchParams {
+        return this._stream;
+    }
+
+    public set stream(stream: ISearchParams) {
+        this._stream = stream;
+    }
+
+    public get share(): IShare {
+        return this._share;
+    }
+
+    public set share(share: IShare) {
+        this._share = share;
+    }
+
+    public async getWordCloud(): Promise<string> {
+        try {
+            const response = await Api.get(`/tweet-collections/${this.name}/word-cloud`, {}, {auth: true});
+            return response.image;
+        } catch (err) {
+            const response = await Api.post(`/word-cloud`, this.getTweets());
+            return response.image;
+        }
+    }
+
+    public toJson() {
+        return {
+            name: this.name,
+            tweets: this.getTweets(),
+            stream: this.stream,
+            share: this.share
+        }
+    }
+
+    public async save(): Promise<EventEmitter> {
+        const tweetCollection = this.toJson();
+//      tweetCollection.tweets = [];
+        await Api.put(`/tweet-collections/${this.name}`, tweetCollection, { auth: true });
+        const progress = new EventEmitter();
+        const size = this.size();
+        const name = this.name;
+        const tweets = this.getTweets();
+        (async () => {
+            let nextTweet = 0;
+            while (nextTweet < size) {
+                const from = nextTweet;
+                const to = Math.min(from + Config.chunkSize, size);
+                await Api.post(`/tweet-collections/${name}/tweets`, tweets.slice(from, to), { auth: true });
+                nextTweet = to;
+                const percentage = 100 * to / size;
+                progress.emit('progress', Math.round(percentage));
+            }
+        })();
+        return progress;
+    }
 }

@@ -1,18 +1,51 @@
 {
     "port": 3000,
-    "origin": "http://localhost:8080",
+    "origin": "http://localhost:3000",
     "saltRounds": 10,
     "twitterApiUrl": "https://api.twitter.com/",
+    "twitterStreamUrl": "https://stream.twitter.com/",
+    "twitterRequestToken": "https://api.twitter.com/oauth/request_token",
+    "callbackUrl": "/auth/twitter/success",
+    "chunkSize": 4096,
+    "tweetBufferSize": 200,
+    "maxStreamAttempts": 5,
+    "streamIntervalTime": 5000,
+    "maxTweetsForWordCloud": 100,
+    "wordCloud": {
+        "width": 800,
+        "height": 600,
+        "scale": 2,
+        "maxWords": 100,
+        "padding": 5,
+        "font": "serif",
+        "minSize": 20,
+        "maxSize": 100
+    },
+    "tagBlacklist": [ "https" ],
     "requiredEnvVars": [
         "JWT_SECRET",
-        "BEARER_TOKEN"
+        "CONSUMER_KEY",
+        "ACCESS_TOKEN",
+        "CONSUMER_SECRET",
+        "ACCESS_SECRET"
     ],
-    "whitelist": [
-        "login",
+    "authWhitelist": [
+        "auth",
         "tweets",
-        "trends"
+        "trends",
+        "word-cloud",
+        "img",
+        "favicon.ico"
+    ],
+    "originWhitelist": [
+        "https://api.twitter.com",
+        "http://localhost:8080"
     ],
     "folders": [
         "users"
+    ],
+    "facebookPermissions": [
+        "pages_manage_posts",
+        "pages_read_engagement"
     ]
 }

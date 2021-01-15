@@ -1,0 +1,24 @@
+{
+  "name": "shared",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "dist/index",
+  "types": "dist/index",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run clean && npm run compile",
+    "compile": "tsc",
+    "clean": "rimraf -rf ./dist"
+  },
+  "author": "",
+  "engines": {
+    "node": "14.15.3"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "rimraf": "^3.0.2"
+  }
+}

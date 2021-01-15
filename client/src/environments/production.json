@@ -1,0 +1,7 @@
+{
+    "PUBLIC_URL": "https://calopsy.com/twitter-tracker",
+    "API_URL": "https://calopsy.com/twitter-tracker",
+    "CHUNK_SIZE": 15,
+    "IMAGE_WIDTH": 925,
+    "IMAGE_HEIGHT": 635
+}

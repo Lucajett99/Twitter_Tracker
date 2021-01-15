@@ -13,7 +13,6 @@ build
 
 # IDEs and editors
 .idea
-.vscode
 
 # misc
 .DS_Store
@@ -28,3 +27,7 @@ yarn-error.log*
 
 .scannerwork/
 out/
+dist/
+users/
+
+.nyc_output

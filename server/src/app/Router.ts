@@ -4,8 +4,8 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import jwt from 'jsonwebtoken';
+import { IToken } from '@twitter-tracker/shared';
 import User from '../modules/User';
-import IToken from '../types/interfaces/Token';
 import Config from './Config';
 
 export interface Routable {
@@ -26,14 +26,14 @@ export default abstract class Router {
     }
 
     private static configMiddlewares(app: Application) {
-        app.use(bodyParser.json());
+        app.use(bodyParser.json({ limit: '50mb' }));
         app.use(cors(Config.cors));
-        app.use(Router.auth);
+        app.use('/', express.static(Config.distDir));
     }
 
     private static registerModules() {
-        const dir = fs.readdirSync(Config.modulesDir)
-        const files = dir.filter(file => file.endsWith('.js'));
+        const dir = fs.readdirSync(Config.modulesDir);
+        const files = dir.filter(file => file.endsWith('.js') || file.endsWith('.ts'));
         for (const file of files)
             require(path.join(Config.modulesDir, file));
     }
@@ -50,24 +50,19 @@ export default abstract class Router {
         app.use(Router.handleError);
     }
 
-    private static getModule(url: string): string {
-        const parts = url.split('?');
-        const urlPath = parts[0].slice(1);
-        const subPaths = urlPath.split('/');
-        const module = subPaths[0];
-        return module;
-    }
-
-    private static auth(req: Request, res: Response, next: () => void) {
-        const token = req.headers.authorization;
-        const module = Router.getModule(req.url);
+    public static auth(req: Request, res: Response, next: () => void) {
+        if (!req.headers.authorization)
+            return res.status(401).send({ error: 'Missing authorization header' });
+        const auth = req.headers.authorization.split(' ');
+        const type = auth[0];
+        if (type !== 'Bearer')
+            return res.status(401).send({ error: 'Wrong authorization type: only Bearer token is accepted' });
+        const token = auth[1];
         try {
-            if (!Config.whitelist.includes(module)) {
-                if (!token)
-                    return res.status(401).send({ error: 'Missing authorization header' });
-                const { username } = jwt.verify(token, Config.jwtSecret) as IToken;
-                req.user = User.getByUsername(username);
-            }
+            if (!token)
+                return res.status(401).send({ error: 'Missing Bearer token' });
+            const { username } = jwt.verify(token, Config.jwtSecret) as IToken;
+            req.user = User.getByUsername(username);
             next();
         } catch (err) {
             res.status(401).send({ error: 'Bad token' });
@@ -75,6 +70,6 @@ export default abstract class Router {
     }
 
     private static handleError(err: Error, req: Request, res: Response, next: () => void) {
-        // console.error(err);
+        console.error(err);
     }
 }

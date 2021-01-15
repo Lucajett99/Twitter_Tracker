@@ -1,0 +1,7 @@
+{
+    "PUBLIC_URL": "http://localhost:3000",
+    "API_URL": "http://localhost:3000",
+    "CHUNK_SIZE": 15,
+    "IMAGE_WIDTH": 925,
+    "IMAGE_HEIGHT": 635
+}

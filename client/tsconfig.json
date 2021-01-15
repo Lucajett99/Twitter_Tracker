@@ -1,12 +1,14 @@
 {
+    "extends": "../tsconfig.json",
     "compilerOptions": {
         "jsx": "react",
         "module": "commonjs",
         "noImplicitAny": true,
-        "outDir": "./build/",
+        "rootDir": "./src",
         "preserveConstEnums": true,
         "removeComments": true,
         "resolveJsonModule": true,
+        "declaration": false,
         "sourceMap": true,
         "target": "es6",
         "esModuleInterop": true,
@@ -17,6 +19,10 @@
         "es7.object"
     ],
     "include": [
-        "src/components/index.tsx"
+        "src/**/*",
+        "src/**/*.json"
+    ],
+    "references": [
+        { "path": "../shared" }
     ]
 }
